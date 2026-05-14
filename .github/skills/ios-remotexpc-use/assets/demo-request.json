@@ -1,0 +1,29 @@
+{
+  "bundleId": "com.jianfeng.iosclickdemo",
+  "actions": [
+    { "type": "launch" },
+    {
+      "type": "tap",
+      "target": { "id": "tap-demo.button" },
+      "timeout": 10
+    },
+    {
+      "type": "assertText",
+      "target": { "id": "tap-demo.status" },
+      "expected": "Tapped 1 time",
+      "timeout": 5
+    },
+    {
+      "type": "typeText",
+      "target": { "id": "text-demo.field" },
+      "text": "hello from skill",
+      "timeout": 5
+    },
+    {
+      "type": "assertText",
+      "target": { "id": "text-demo.output" },
+      "expected": "hello from skill",
+      "timeout": 5
+    }
+  ]
+}
