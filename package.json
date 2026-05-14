@@ -56,6 +56,9 @@
     "test:dvt:network-monitor": "mocha test/integration/dvt_instruments/network-monitor-test.ts --exit --timeout 1m",
     "test:dvt:process-control": "mocha test/integration/process-control-test.ts --exit --timeout 1m",
     "test:testmanagerd": "mocha test/integration/testmanagerd-test.ts --exit --timeout 2m",
+    "demo:iphone:screenshot": "node scripts/iphone-screenshot-demo.mjs",
+    "demo:iphone:http-server": "node scripts/iphone-http-automation-server.mjs",
+    "demo:iphone:http-demo": "node scripts/iphone-http-automation-demo-request.mjs",
     "test:tunnel-creation": "sudo node scripts/tunnel-creation.mjs",
     "test:tunnel-creation:lsof": "sudo node scripts/tunnel-creation.mjs --keep-open"
   },
