@@ -5,3 +5,5 @@ build/
 .DS_Store
 tunnel-registry.json
 package-lock.json
+
+artifacts
