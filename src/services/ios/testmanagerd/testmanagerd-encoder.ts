@@ -1,6 +1,26 @@
 import { PlistUID } from '../../../lib/plist/index.js';
 import { NSKeyedArchiverEncoder } from '../dvt/nskeyedarchiver-encoder.js';
 
+type NSMutableArrayMarker = {
+  __type: 'NSMutableArray';
+  items: any[];
+};
+
+type XCPointerEventMarker = {
+  __type: 'XCPointerEvent';
+  fields: Record<string, any>;
+};
+
+type XCPointerEventPathMarker = {
+  __type: 'XCPointerEventPath';
+  fields: Record<string, any>;
+};
+
+type XCSynthesizedEventRecordMarker = {
+  __type: 'XCSynthesizedEventRecord';
+  fields: Record<string, any>;
+};
+
 /**
  * Extended NSKeyedArchiver encoder that handles testmanagerd-specific
  * marker types: NSUUID and XCTCapabilities.
@@ -23,6 +43,25 @@ export class TestmanagerdEncoder extends NSKeyedArchiverEncoder {
           return this.archiveNSUUID(value.uuid);
         case 'XCTCapabilities':
           return this.archiveXCTCapabilities(value.capabilities ?? {});
+        case 'NSMutableArray':
+          return this.archiveNSMutableArray(
+            (value as NSMutableArrayMarker).items,
+          );
+        case 'XCPointerEvent':
+          return this.archiveCustomFieldsObject(
+            'XCPointerEvent',
+            (value as XCPointerEventMarker).fields,
+          );
+        case 'XCPointerEventPath':
+          return this.archiveCustomFieldsObject(
+            'XCPointerEventPath',
+            (value as XCPointerEventPathMarker).fields,
+          );
+        case 'XCSynthesizedEventRecord':
+          return this.archiveCustomFieldsObject(
+            'XCSynthesizedEventRecord',
+            (value as XCSynthesizedEventRecordMarker).fields,
+          );
       }
     }
 
@@ -59,6 +98,48 @@ export class TestmanagerdEncoder extends NSKeyedArchiverEncoder {
 
     this.objects[index] = {
       'capabilities-dictionary': new PlistUID(dictIndex),
+      $class: new PlistUID(classUid),
+    };
+
+    return index;
+  }
+
+  private archiveNSMutableArray(items: any[]): number {
+    const index = this.objects.length;
+    this.objects.push(null);
+
+    const itemUids = items.map(
+      (item) => new PlistUID(this.archiveObject(item)),
+    );
+    const classUid = this.getClassUid('NSMutableArray', 'NSArray', 'NSObject');
+
+    this.objects[index] = {
+      'NS.objects': itemUids,
+      $class: new PlistUID(classUid),
+    };
+
+    return index;
+  }
+
+  private archiveCustomFieldsObject(
+    className: string,
+    fields: Record<string, any>,
+  ): number {
+    const index = this.objects.length;
+    this.objects.push(null);
+
+    const archivedFields: Record<string, any> = {};
+    for (const [key, value] of Object.entries(fields)) {
+      archivedFields[key] =
+        value instanceof PlistUID
+          ? value
+          : new PlistUID(this.archiveObject(value));
+    }
+
+    const classUid = this.getClassUid(className, 'NSObject');
+
+    this.objects[index] = {
+      ...archivedFields,
       $class: new PlistUID(classUid),
     };
 

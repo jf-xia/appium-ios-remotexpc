@@ -1,11 +1,18 @@
 import SwiftUI
 
 public struct ContentView: View {
+    @State private var directTapCount = 0
     @State private var tapCount = 0
     @State private var message = ""
 
     private var statusText: String {
         tapCount == 0 ? "Ready for interaction" : "Tapped \(tapCount) time\(tapCount == 1 ? "" : "s")"
+    }
+
+    private var directTapStatus: String {
+        directTapCount == 0
+            ? "Waiting for direct testmanagerd tap"
+            : "Direct tap received \(directTapCount) time\(directTapCount == 1 ? "" : "s")"
     }
 
     public var body: some View {
@@ -18,6 +25,39 @@ public struct ContentView: View {
                         Text("Use this screen to verify tap, text entry, and swipe automation on a real device.")
                             .font(.body)
                             .foregroundStyle(.secondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Direct RemoteXPC Tap Demo")
+                            .font(.headline)
+                        Text(directTapStatus)
+                            .accessibilityIdentifier("direct-tap.status")
+
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.orange.opacity(0.18), Color.red.opacity(0.12)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 260)
+                            .overlay {
+                                VStack(spacing: 10) {
+                                    Text("Tap Anywhere In This Zone")
+                                        .font(.title2.bold())
+                                    Text("The direct testmanagerd demo injects a coordinate tap here and the app logs a validation line.")
+                                        .multilineTextAlignment(.center)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 20)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                directTapCount += 1
+                                NSLog("[DirectRemoteXPCDemo] direct tap zone tapped count=%d", directTapCount)
+                            }
                     }
 
                     VStack(alignment: .leading, spacing: 12) {

@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "D2534ED2-D690-4135-BE99-6FD1E2C57099",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:IOSClickDemo.xcodeproj",
+        "identifier" : "8B41F65B2DEDD0D6001A66F9",
+        "name" : "IOSClickDemoUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

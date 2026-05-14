@@ -1,5 +1,7 @@
+import { BaseItem, strongbox } from '@appium/strongbox';
 import * as http from 'node:http';
 
+import { TUNNEL_CONTAINER_NAME } from '../../constants.js';
 import { getLogger } from '../logger.js';
 import type { TunnelRegistry, TunnelRegistryEntry } from '../types.js';
 import {
@@ -11,6 +13,7 @@ import {
 
 // Constants
 export const DEFAULT_TUNNEL_REGISTRY_PORT = 42314;
+const TUNNEL_REGISTRY_PORT_ITEM = 'tunnelRegistryPort';
 
 /** Path segments that must not bind to `:udid` (reserved static routes). */
 const RESERVED_TUNNEL_UDID_SEGMENTS = new Set(['metadata']);
@@ -97,7 +100,14 @@ export class TunnelRegistryServer {
           log.info(
             `API available at http://localhost:${this.port}${TUNNEL_REGISTRY_API_BASE_PATH}`,
           );
-          resolve();
+          void (async () => {
+            try {
+              await this.persistPort();
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          })();
         });
 
         // Handle server errors
@@ -131,6 +141,7 @@ export class TunnelRegistryServer {
           }
         });
       });
+      await this.clearPersistedPort();
       log.info('Tunnel Registry Server stopped');
     } catch (error) {
       log.error(`Error stopping server: ${error}`);
@@ -376,6 +387,22 @@ export class TunnelRegistryServer {
           this.updateTunnel(req, res, params.udid),
       },
     ];
+  }
+
+  private async persistPort(): Promise<void> {
+    const item = new BaseItem(
+      TUNNEL_REGISTRY_PORT_ITEM,
+      strongbox(TUNNEL_CONTAINER_NAME),
+    );
+    await item.write(String(this.port));
+  }
+
+  private async clearPersistedPort(): Promise<void> {
+    const item = new BaseItem(
+      TUNNEL_REGISTRY_PORT_ITEM,
+      strongbox(TUNNEL_CONTAINER_NAME),
+    );
+    await item.clear();
   }
 }
 

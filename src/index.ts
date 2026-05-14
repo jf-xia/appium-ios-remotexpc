@@ -95,6 +95,7 @@ export { TunnelAvailabilityError } from './services.js';
 export { XCTestConfigurationEncoder } from './services/ios/testmanagerd/xctestconfiguration.js';
 export type { XCTestConfigurationParams } from './services/ios/testmanagerd/xctestconfiguration.js';
 export { ProcessControl } from './services/ios/dvt/instruments/process-control.js';
+export { DvtTestmanagedProxyService } from './services/ios/testmanagerd/index.js';
 export {
   XCUITestService,
   XCTestRunner,
@@ -102,6 +103,12 @@ export {
   runXCTest,
 } from './services/ios/testmanagerd/xcuitest.js';
 export { XCTestAttachment } from './services/ios/testmanagerd/xctest-attachment.js';
+export {
+  createAuthorizedControlSession,
+  createDirectTapEventRecord,
+  performDirectTap,
+} from './services/ios/testmanagerd/direct-device-events.js';
+export type { DirectTapEventOptions } from './services/ios/testmanagerd/direct-device-events.js';
 export {
   XCTestRunError,
   XCTestEventType,

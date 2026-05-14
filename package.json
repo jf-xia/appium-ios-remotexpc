@@ -59,6 +59,7 @@
     "demo:iphone:screenshot": "node scripts/iphone-screenshot-demo.mjs",
     "demo:iphone:http-server": "node scripts/iphone-http-automation-server.mjs",
     "demo:iphone:http-demo": "node scripts/iphone-http-automation-demo-request.mjs",
+    "demo:iphone:direct-tap": "node scripts/iphone-testmanagerd-direct-tap-demo.mjs",
     "test:tunnel-creation": "sudo node scripts/tunnel-creation.mjs",
     "test:tunnel-creation:lsof": "sudo node scripts/tunnel-creation.mjs --keep-open"
   },

@@ -1,4 +1,6 @@
 import Foundation
+import CoreGraphics
+import ObjectiveC.runtime
 import XCTest
 
 private struct AutomationRequest: Decodable {
@@ -80,6 +82,26 @@ final class IOSClickDemoUITests: XCTestCase {
     }
 
     @MainActor
+    func testDumpSynthesizedTapEventArchive() throws {
+        let data = try createSynthesizedTapArchive(
+            at: CGPoint(x: 120, y: 240),
+            liftUpOffset: 0.05
+        )
+        print("SYNTHESIZED_TAP_ARCHIVE_BASE64=\(data.base64EncodedString())")
+        XCTAssertGreaterThan(data.count, 0)
+    }
+
+    @MainActor
+    func testHoldForDirectRemoteXpcSession() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let seconds = ProcessInfo.processInfo.environment["DIRECT_REMOTE_XPC_HOLD_SECONDS"]
+            .flatMap(Double.init) ?? 30
+        RunLoop.current.run(until: Date().addingTimeInterval(seconds))
+    }
+
+    @MainActor
     private func runAutomation(_ request: AutomationRequest) throws {
         let app = appForRequest(request)
         for action in request.actions {
@@ -96,6 +118,46 @@ final class IOSClickDemoUITests: XCTestCase {
         }
 
         return try JSONDecoder().decode(AutomationRequest.self, from: data)
+    }
+
+    private func createSynthesizedTapArchive(
+        at point: CGPoint,
+        liftUpOffset: TimeInterval
+    ) throws -> Data {
+        guard let recordClass = NSClassFromString("XCSynthesizedEventRecord") as? NSObject.Type,
+              let pathClass = NSClassFromString("XCPointerEventPath") as? NSObject.Type
+        else {
+            throw NSError(domain: "IOSClickDemoUITests", code: 10)
+        }
+
+        let recordAlloc = recordClass.perform(NSSelectorFromString("alloc"))?.takeUnretainedValue()
+        guard let record = recordAlloc?.perform(NSSelectorFromString("initWithName:"), with: "direct-remote-xpc-tap")?.takeUnretainedValue() as? NSObject else {
+            throw NSError(domain: "IOSClickDemoUITests", code: 11)
+        }
+
+        let pathAlloc = pathClass.perform(NSSelectorFromString("alloc"))?.takeUnretainedValue()
+        let initSelector = NSSelectorFromString("initForTouchAtPoint:offset:")
+        guard let pathAllocObject = pathAlloc as AnyObject?,
+              let implementation = class_getMethodImplementation(pathClass, initSelector)
+        else {
+            throw NSError(domain: "IOSClickDemoUITests", code: 12)
+        }
+
+        typealias InitForTouchAtPoint = @convention(c) (AnyObject, Selector, CGPoint, Double) -> Unmanaged<AnyObject>
+        let initForTouchAtPoint = unsafeBitCast(implementation, to: InitForTouchAtPoint.self)
+        let path = initForTouchAtPoint(pathAllocObject, initSelector, point, 0.0).takeUnretainedValue()
+
+        guard let path = path as? NSObject else {
+            throw NSError(domain: "IOSClickDemoUITests", code: 12)
+        }
+
+        _ = path.perform(
+            NSSelectorFromString("liftUpAtOffset:"),
+            with: NSNumber(value: liftUpOffset)
+        )
+        _ = record.perform(NSSelectorFromString("addPointerEventPath:"), with: path)
+
+        return try NSKeyedArchiver.archivedData(withRootObject: record, requiringSecureCoding: true)
     }
 
     private func appForRequest(_ request: AutomationRequest) -> XCUIApplication {

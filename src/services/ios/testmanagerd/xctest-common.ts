@@ -279,6 +279,10 @@ export interface XCUITestOptions {
   productModuleName?: string;
   /** Whether to initialize for UI testing (default: true) */
   initializeForUITesting?: boolean;
+  /** Optional list of test identifiers to run */
+  testsToRun?: string[];
+  /** Optional list of test identifiers to skip */
+  testsToSkip?: string[];
 }
 
 /** High-level XCTest runner options */

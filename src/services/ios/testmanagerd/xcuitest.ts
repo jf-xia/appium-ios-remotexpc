@@ -10,7 +10,11 @@ import type {
 } from '../../../lib/types.js';
 import * as Services from '../../../services.js';
 import { MessageAux } from '../dvt/dtx-message.js';
-import { InstallationProxyService } from '../installation-proxy/index.js';
+import type { InstallationProxyService } from '../installation-proxy/index.js';
+import {
+  type DirectTapEventOptions,
+  createDirectTapEventRecord,
+} from './direct-device-events.js';
 import {
   DEFAULT_EXEC_CAPABILITIES,
   DEFAULT_LAUNCH_ENV,
@@ -446,10 +450,35 @@ export class XCUITestService extends EventEmitter<XCUITestServiceEvents> {
       initializeForUITesting: this.options.initializeForUITesting ?? true,
       reportResultsToIDE: true,
       productModuleName: this.options.productModuleName,
+      testsToRun: this.options.testsToRun,
+      testsToSkip: this.options.testsToSkip,
     };
 
     const archived = encoder.encodeXCTestConfiguration(params);
     return createBinaryPlist(archived);
+  }
+
+  async dispatchDirectTap(options: DirectTapEventOptions): Promise<void> {
+    if (!this.execChannelCode) {
+      throw new Error('Exec channel is not initialized');
+    }
+
+    if (this.configReplyDeferred) {
+      await this.configReplyDeferred.promise;
+    }
+
+    const args = new MessageAux();
+    args.appendObj(createDirectTapEventRecord(options));
+    args.appendObj(null);
+
+    await this.execConnection.sendMessage(
+      this.execChannelCode,
+      '_XCT_performDeviceEvent:completion:',
+      {
+        args,
+        expectsReply: false,
+      },
+    );
   }
 
   private handleCallback(selector: any, auxiliaries: any[]): void {
