@@ -22,6 +22,20 @@ private struct AutomationAction: Decodable {
 private struct AutomationTarget: Decodable {
     let id: String?
     let label: String?
+    let kind: String?
+    let index: Int?
+
+    init(
+        id: String? = nil,
+        label: String? = nil,
+        kind: String? = nil,
+        index: Int? = nil
+    ) {
+        self.id = id
+        self.label = label
+        self.kind = kind
+        self.index = index
+    }
 }
 
 private enum AutomationActionType: String, Decodable {
@@ -223,13 +237,53 @@ final class IOSClickDemoUITests: XCTestCase {
     }
 
     private func resolveElement(_ target: AutomationTarget, in app: XCUIApplication) -> XCUIElement {
+        let elementType = resolveElementType(target.kind)
+
         if let id = target.id, !id.isEmpty {
-            return app.descendants(matching: .any)[id]
+            return app.descendants(matching: elementType)[id]
         }
         if let label = target.label, !label.isEmpty {
-            return app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+            let matches = app.descendants(matching: elementType).matching(NSPredicate(format: "label == %@", label))
+            if let index = target.index, index >= 0 {
+                return matches.element(boundBy: index)
+            }
+            return matches.firstMatch
+        }
+        if elementType != .any {
+            let query = app.descendants(matching: elementType)
+            if let index = target.index, index >= 0 {
+                return query.element(boundBy: index)
+            }
+            return query.firstMatch
         }
         return app
+    }
+
+    private func resolveElementType(_ kind: String?) -> XCUIElement.ElementType {
+        guard let kind else {
+            return .any
+        }
+
+        switch kind.lowercased() {
+        case "button":
+            return .button
+        case "textview", "text_view":
+            return .textView
+        case "textfield", "text_field":
+            return .textField
+        case "securetextfield", "secure_text_field":
+            return .secureTextField
+        case "cell":
+            return .cell
+        case "statictext", "static_text":
+            return .staticText
+        case "scrollview", "scroll_view":
+            return .scrollView
+        case "other":
+            return .other
+        default:
+            return .any
+        }
     }
 
     private func resolveCoordinate(_ action: AutomationAction, in app: XCUIApplication) throws -> XCUICoordinate {

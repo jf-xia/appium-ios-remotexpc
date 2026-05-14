@@ -5,10 +5,13 @@ import path from 'node:path';
 
 import { Command } from 'commander';
 
+import { DVTSecureSocketProxyService } from '../build/src/services/ios/dvt/index.js';
+import { Screenshot } from '../build/src/services/ios/dvt/instruments/screenshot.js';
 import {
-  Services,
-  TunnelAvailabilityError,
+  TunnelManager,
   createUsbmux,
+  createLockdownServiceByUDID,
+  startCoreDeviceProxy,
 } from 'appium-ios-remotexpc';
 
 function timestamp() {
@@ -68,27 +71,47 @@ async function main() {
   const udid = await resolveUdid(options.udid ?? process.env.UDID ?? '');
   const outputPath = path.resolve(options.output);
 
-  let dvtConnection;
+  let remoteXPC;
+  let dvtService;
   try {
-    dvtConnection = await Services.startDVTService(udid);
-    const screenshot = await dvtConnection.screenshot.getScreenshot();
+    const { lockdownService, device } = await createLockdownServiceByUDID(udid);
+    const { socket } = await startCoreDeviceProxy(
+      lockdownService,
+      device.DeviceID,
+      device.Properties.SerialNumber,
+      {
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2',
+      },
+    );
+
+    const tunnel = await TunnelManager.getTunnel(socket);
+    remoteXPC = await TunnelManager.createRemoteXPCConnection(
+      tunnel.Address,
+      tunnel.RsdPort,
+    );
+
+    const dvtServiceDescriptor = remoteXPC.findService(
+      DVTSecureSocketProxyService.RSD_SERVICE_NAME,
+    );
+    dvtService = new DVTSecureSocketProxyService([
+      tunnel.Address,
+      parseInt(dvtServiceDescriptor.port, 10),
+    ]);
+    await dvtService.connect();
+
+    const screenshotService = new Screenshot(dvtService);
+    const screenshot = await screenshotService.getScreenshot();
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, screenshot);
     console.log(`Connected to ${udid}`);
     console.log(`Saved screenshot to ${outputPath}`);
   } catch (error) {
-    if (error instanceof TunnelAvailabilityError) {
-      console.error(error.message);
-      console.error('Start a tunnel first: sudo npm run tunnel-creation');
-      process.exitCode = 1;
-      return;
-    }
     throw error;
   } finally {
-    if (dvtConnection) {
-      await dvtConnection.dvtService.close().catch(() => {});
-      await dvtConnection.remoteXPC.close().catch(() => {});
-    }
+    await dvtService?.close().catch(() => {});
+    await remoteXPC?.close().catch(() => {});
+    await TunnelManager.closeAllTunnels().catch(() => {});
   }
 }
 

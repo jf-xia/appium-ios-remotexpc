@@ -83,7 +83,7 @@ process.stdout.write(JSON.stringify(payload));
 EOF
 )"
 
-curl -fsS \
+curl -sS \
   -H 'content-type: application/json' \
   -X POST \
   --data "$PAYLOAD" \

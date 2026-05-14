@@ -34,12 +34,16 @@ Do not queue long speculative chains unless the request is already deterministic
 # Start or reuse the local automation server
 bash .github/skills/ios-remotexpc-use/scripts/ios_remotexpc_server.sh --start
 
+# Simple real-device scenario: open Notes and write an operation log
+bash .github/skills/ios-remotexpc-use/scripts/ios_remotexpc_notes_log.sh \
+  --text $'操作记录\n1. 启动备忘录\n2. 新建备忘录\n3. 写入本次自动化记录'
+
 # Run one action batch from a JSON file
 bash .github/skills/ios-remotexpc-use/scripts/ios_remotexpc_run.sh \
   --request-file .github/skills/ios-remotexpc-use/assets/demo-request.json
 
 # Capture a screenshot after the action batch
-bash .github/skills/ios-remotexpc-use/scripts/ios_remotexpc_snapshot.sh
+sudo bash .github/skills/ios-remotexpc-use/scripts/ios_remotexpc_snapshot.sh
 ```
 
 ## Supported Actions
@@ -69,12 +73,21 @@ Request shapes and examples are in [./references/actions.md](./references/action
 - Server lifecycle: [./scripts/ios_remotexpc_server.sh](./scripts/ios_remotexpc_server.sh)
 - Run one automation batch: [./scripts/ios_remotexpc_run.sh](./scripts/ios_remotexpc_run.sh)
 - Capture screenshot: [./scripts/ios_remotexpc_snapshot.sh](./scripts/ios_remotexpc_snapshot.sh)
+- Launch an app: [./scripts/ios_remotexpc_launch.sh](./scripts/ios_remotexpc_launch.sh)
+- Tap by coordinates or target: [./scripts/ios_remotexpc_tap.sh](./scripts/ios_remotexpc_tap.sh)
+- Type into a target: [./scripts/ios_remotexpc_type.sh](./scripts/ios_remotexpc_type.sh)
+- Swipe a target or the app: [./scripts/ios_remotexpc_swipe.sh](./scripts/ios_remotexpc_swipe.sh)
+- Wait for an element: [./scripts/ios_remotexpc_wait.sh](./scripts/ios_remotexpc_wait.sh)
+- Assert text: [./scripts/ios_remotexpc_assert_text.sh](./scripts/ios_remotexpc_assert_text.sh)
+- Notes demo flow: [./scripts/ios_remotexpc_notes_log.sh](./scripts/ios_remotexpc_notes_log.sh)
 
 ## References
 - Workflow: [./references/workflow.md](./references/workflow.md)
 - Action JSON shapes: [./references/actions.md](./references/actions.md)
+- Command reference: [./references/command-reference.md](./references/command-reference.md)
 
 ## Limitations
 - This skill targets a real iPhone on this Mac. It does not manage simulators.
 - It uses the repo's current XCUITest action model, not a generic element inspector.
 - Direct `testmanagerd` tap injection is still experimental and is not the default path for this skill.
+- Screenshot capture creates a local utun tunnel and currently needs `sudo` on macOS.

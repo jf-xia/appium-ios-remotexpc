@@ -1,0 +1,13 @@
+{
+  "bundleId": "com.apple.mobilenotes",
+  "actions": [
+    { "type": "launch" },
+    { "type": "tap", "x": 360, "y": 810 },
+    {
+      "type": "typeText",
+      "target": { "kind": "textView", "index": 0 },
+      "text": "操作记录\n1. 启动备忘录\n2. 新建备忘录\n3. 写入本次自动化记录",
+      "timeout": 10
+    }
+  ]
+}
